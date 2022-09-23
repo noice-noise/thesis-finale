@@ -1,0 +1,126 @@
+<html>
+  <head>
+    <style>
+      .header {
+        text-align: center;
+      }
+
+      .main {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: stretch;
+        width: 100%;
+        max-width: 500px;
+        gap: 3rem;
+        margin: 0 auto;
+      }
+
+      .form {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: stretch;
+        gap: 1rem;
+      }
+
+      .form-label {
+        display: block;
+        width: 100%;
+      }
+
+      .form-input {
+        padding: 0.5rem 0.5rem;
+        width: 100%;
+      }
+
+      .btn {
+        padding: 0.5rem 3rem;
+      }
+
+      .w-full {
+        width: 100%;
+      }
+
+      #rxConsole {
+        height: 10em;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body onload="javascript:init()">
+    <header class="header">
+      <div>
+        <h1>Auto Tank Control Panel</h1>
+      </div>
+    </header>
+    <main class="main">
+      <div>
+        <label for="rxConsole">(Rx) Console [READONLY]</label>
+        <textarea id="rxConsole" readonly></textarea>
+      </div>
+      <div>
+        <label class="form-label" for="txInput">Transmit (Tx) Bar</label>
+        <input class="form-input" type="text" id="txInput" />
+      </div>
+      <div>
+        <button class="btn w-full" id="indicatorLed">Toggle LED</button>
+      </div>
+      <form class="form" id="dataForm">
+        <div class="form-control">
+          <label class="form-label" for="led">Led</label>
+          <input class="form-input" name="led" id="led" />
+        </div>
+        <div>
+          <label class="form-label" for="command">Command</label>
+          <input class="form-input" name="command" id="command" />
+        </div>
+        <button class="btn" type="submit">Send</button>
+      </form>
+    </main>
+
+    <script>
+      const indicatorLed = document.getElementById('indicatorLed');
+      const txInput = document.getElementById('txInput');
+      const rxConsole = document.getElementById('rxConsole');
+      const dataForm = document.getElementById('dataForm');
+
+      var Socket;
+
+      const init = () => {
+        Socket = new WebSocket('ws://' + window.location.hostname + ':81/');
+        Socket.onmessage = transmitText;
+      };
+
+      const toggleSwitch = () => {
+        Socket.send('$');
+      };
+
+      const transmitText = (event) => {
+        if (event.keyCode == 13) {
+          const data = txInput.value;
+          Socket.send(data);
+          txInput.value = '';
+        }
+      };
+
+      const onSocketMessage = (event) => {
+        rxConsole.value += event.data;
+      };
+
+      const onFormSubmit = (event) => {
+        event.preventDefault();
+
+        const formData = new FormData(event.target);
+        const jsonData = JSON.stringify(Object.fromEntries(formData));
+
+        Socket.send(jsonData);
+      };
+
+      indicatorLed.addEventListener('click', toggleSwitch);
+      txInput.addEventListener('keydown', transmitText);
+      dataForm.addEventListener('submit', onFormSubmit);
+    </script>
+  </body>
+</html>

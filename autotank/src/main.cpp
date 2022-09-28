@@ -1,20 +1,46 @@
 
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <WebSocketsServer.h>
-#include <ArduinoJson.h>
 
 ESP8266WebServer server;
 WebSocketsServer webSocket = WebSocketsServer(81);
 
-const char *ssid = "ZTE_2.4G_dtgg7C";
-const char *password = "hSLdzYah";
+// const char *ssid = "ZTE_2.4G_dtgg7C";
+// const char *password = "hSLdzYah";
 
-#define toggle_led 4
-uint8_t pin_led = 16;
+// const char *ssid = "AutoTankMaster";
+// const char *password = "tank_admin_01";
 
-int brightness;
+const char *ssid = "DelCorro";
+const char *password = "Mind_Valley21";
+
+// #define resetPin D0
+#define trig D1
+#define echo D2
+
+#define pump D3
+#define valve D4
+
+// #define trig D5
+// #define echo D6
+
+#define ledRed D6
+#define ledGreen D7
+#define ledBlue D8
+
+const char AUTO_MODE = 'A';
+const char CONTROL_MODE = 'C';
+const char SLEEP_MODE = 'S';
+
+int leds[] = {ledRed, ledGreen, ledBlue};
+
+char tankMode = AUTO_MODE;
+
+int distance;
+int duration;
 
 char webpage[] PROGMEM = R"=====(
 <html>
@@ -84,7 +110,13 @@ char webpage[] PROGMEM = R"=====(
         <input class="form-input" type="text" id="txInput" />
       </div>
       <div>
-        <button class="btn w-full" id="indicatorLed">Toggle LED</button>
+        <select class="btn w-full" name="mode" id="mode">
+          <option value="A">Auto Mode</option>
+          <option value="C">Control Mode</option>
+          <option value="S">Sleep Mode</option>
+        </select>
+        <button class="btn w-full" id="pumpButton">Toggle Pump</button>
+        <button class="btn w-full" id="valveButton">Toggle Valve</button>
       </div>
       <form class="form" id="dataForm">
         <div class="form-control">
@@ -100,7 +132,9 @@ char webpage[] PROGMEM = R"=====(
     </main>
 
     <script>
-      const indicatorLed = document.getElementById('indicatorLed');
+      const pumpButton = document.getElementById('pumpButton');
+      const valveButton = document.getElementById('valveButton');
+      const mode = document.getElementById('mode');
       const txInput = document.getElementById('txInput');
       const rxConsole = document.getElementById('rxConsole');
       const dataForm = document.getElementById('dataForm');
@@ -109,11 +143,15 @@ char webpage[] PROGMEM = R"=====(
 
       const init = () => {
         Socket = new WebSocket('ws://' + window.location.hostname + ':81/');
-        Socket.onmessage = transmitText();
+        Socket.onmessage = transmitText;
       };
 
-      const toggleSwitch = () => {
-        Socket.send('$');
+      const togglePump = () => {
+        Socket.send('3');
+      };
+
+      const toggleValve = () => {
+        Socket.send('4');
       };
 
       const transmitText = (event) => {
@@ -137,13 +175,46 @@ char webpage[] PROGMEM = R"=====(
         Socket.send(jsonData);
       };
 
-      indicatorLed.addEventListener('click', toggleSwitch);
+      const onModeSelect = (event) => {
+        Socket.send(mode.value);
+      };
+
+      pumpButton.addEventListener('click', togglePump);
+      valveButton.addEventListener('click', toggleValve);
       txInput.addEventListener('keydown', transmitText);
       dataForm.addEventListener('submit', onFormSubmit);
+      mode.addEventListener('change', onModeSelect);
     </script>
   </body>
 </html>
 )=====";
+
+void showLed(int ledToOn)
+{
+  for (int i = 0; i < 3; i++)
+  {
+    if (leds[i] == ledToOn)
+    {
+      Serial.print("Showing LED...");
+      Serial.println(ledToOn);
+      digitalWrite(leds[i], HIGH);
+    }
+    else
+    {
+      digitalWrite(leds[i], LOW);
+    }
+  }
+}
+
+void togglePump()
+{
+  digitalWrite(pump, !digitalRead(pump));
+}
+
+void toggleValve()
+{
+  digitalWrite(valve, !digitalRead(valve));
+}
 
 void parseJsonData(uint8_t *payload)
 {
@@ -169,47 +240,100 @@ void parseJsonData(uint8_t *payload)
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
 {
-  if (type == WStype_TEXT)
+  if (type != WStype_TEXT)
   {
-    if (payload[0] == '#')
-    {
-      uint16_t brightness = (uint16_t)strtol((const char *)&payload[1], NULL, 10);
-      brightness = 1024 - brightness;
-      analogWrite(pin_led, brightness);
-      Serial.print("brightness= ");
-      Serial.println(brightness);
-    }
-    else if (payload[0] == '$')
-    {
-      if (digitalRead(toggle_led) == HIGH)
-      {
-        Serial.println("toggled LED to LOW");
-        digitalWrite(toggle_led, LOW);
-      }
-      else
-      {
-        Serial.println("toggled LED to HIGH");
-        digitalWrite(toggle_led, HIGH);
-      }
-    }
-    else
-    {
-      for (int i = 0; i < (int)length; i++)
-      {
-        Serial.print("Data: ");
-        Serial.print((char)payload[i]);
-      }
-      Serial.println();
+    return;
+  }
 
-      parseJsonData(payload);
+  char actionCode = payload[0];
+
+  Serial.print("Action Code: ");
+  Serial.println(actionCode);
+
+  if (actionCode == AUTO_MODE || actionCode == CONTROL_MODE || actionCode == SLEEP_MODE)
+  {
+    tankMode = actionCode;
+    return;
+  }
+
+  if (tankMode == CONTROL_MODE)
+  {
+    if (actionCode == '3')
+    {
+      togglePump();
+      return;
     }
+
+    if (actionCode == '4')
+    {
+      toggleValve();
+      return;
+    }
+  }
+
+  Serial.print("Data: ");
+  for (int i = 0; i < (int)length; i++)
+  {
+    Serial.print((char)payload[i]);
+  }
+  Serial.println();
+
+  parseJsonData(payload);
+}
+
+void setPump(int status)
+{
+  digitalWrite(pump, status);
+}
+
+void setValve(int status)
+{
+  digitalWrite(valve, status);
+}
+
+void handleAutoMode()
+{
+  if (distance < 100)
+  {
+    showLed(ledRed);
+    setPump(HIGH);
+    setValve(LOW);
+  }
+  else if (distance >= 100 && distance <= 200)
+  {
+    showLed(ledGreen);
+  }
+  else
+  {
+    setPump(LOW);
+    showLed(ledBlue);
+    setValve(HIGH);
   }
 }
 
-void toggleLED()
+void ultrasonic()
 {
-  digitalWrite(toggle_led, !digitalRead(toggle_led));
-  server.send(204, "");
+  digitalWrite(trig, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trig, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trig, LOW);
+
+  duration = pulseIn(echo, HIGH);
+  distance = duration * 0.034 / 2;
+
+  Serial.print("Distance: ");
+  Serial.println(distance);
+
+  Serial.print("Mode: ");
+  Serial.println(tankMode);
+
+  if (tankMode == AUTO_MODE)
+  {
+    handleAutoMode();
+  }
+
+  delay(500);
 }
 
 void setup()
@@ -228,11 +352,16 @@ void setup()
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
 
-  pinMode(toggle_led, OUTPUT);
+  pinMode(trig, OUTPUT);
+  pinMode(echo, INPUT);
+  pinMode(pump, OUTPUT);
+  pinMode(valve, OUTPUT);
+  pinMode(ledRed, OUTPUT);
+  pinMode(ledGreen, OUTPUT);
+  pinMode(ledBlue, OUTPUT);
 
   server.on("/", []()
             { server.send_P(200, "text/html", webpage); });
-
   server.begin();
 
   webSocket.begin();
@@ -241,8 +370,11 @@ void setup()
 
 void loop()
 {
+  ultrasonic();
+
   webSocket.loop();
   server.handleClient();
+
   if (Serial.available() > 0)
   {
     char c[] = {(char)Serial.read()};

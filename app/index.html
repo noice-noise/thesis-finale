@@ -65,7 +65,13 @@
         <input class="form-input" type="text" id="txInput" />
       </div>
       <div>
-        <button class="btn w-full" id="indicatorLed">Toggle LED</button>
+        <select class="btn w-full" name="mode" id="mode">
+          <option value="A">Auto Mode</option>
+          <option value="C">Control Mode</option>
+          <option value="S">Sleep Mode</option>
+        </select>
+        <button class="btn w-full" id="pumpButton">Toggle Pump</button>
+        <button class="btn w-full" id="valveButton">Toggle Valve</button>
       </div>
       <form class="form" id="dataForm">
         <div class="form-control">
@@ -81,7 +87,9 @@
     </main>
 
     <script>
-      const indicatorLed = document.getElementById('indicatorLed');
+      const pumpButton = document.getElementById('pumpButton');
+      const valveButton = document.getElementById('valveButton');
+      const mode = document.getElementById('mode');
       const txInput = document.getElementById('txInput');
       const rxConsole = document.getElementById('rxConsole');
       const dataForm = document.getElementById('dataForm');
@@ -93,8 +101,12 @@
         Socket.onmessage = transmitText;
       };
 
-      const toggleSwitch = () => {
-        Socket.send('$');
+      const togglePump = () => {
+        Socket.send('3');
+      };
+
+      const toggleValve = () => {
+        Socket.send('4');
       };
 
       const transmitText = (event) => {
@@ -118,9 +130,15 @@
         Socket.send(jsonData);
       };
 
-      indicatorLed.addEventListener('click', toggleSwitch);
+      const onModeSelect = (event) => {
+        Socket.send(mode.value);
+      };
+
+      pumpButton.addEventListener('click', togglePump);
+      valveButton.addEventListener('click', toggleValve);
       txInput.addEventListener('keydown', transmitText);
       dataForm.addEventListener('submit', onFormSubmit);
+      mode.addEventListener('change', onModeSelect);
     </script>
   </body>
 </html>

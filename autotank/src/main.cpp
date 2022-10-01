@@ -4,204 +4,65 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <WebSocketsServer.h>
+#include <LittleFS.h>
+#include <config.h>
+
+#define USE_SERIAL Serial
+
+#define trig D1
+#define echo D2
+#define pump D3
+#define valve D4
+#define ledRed D6
+#define ledGreen D7
+#define ledBlue D8
 
 ESP8266WebServer server;
 WebSocketsServer webSocket = WebSocketsServer(81);
 
-// const char *ssid = "ZTE_2.4G_dtgg7C";
-// const char *password = "hSLdzYah";
+const char *ssid = DEVICE_WIFI_SSID;
+const char *password = DEVICE_WIFI_PASS;
 
-// const char *ssid = "AutoTankMaster";
-// const char *password = "tank_admin_01";
-
-const char *ssid = "DelCorro";
-const char *password = "Mind_Valley21";
-
-// #define resetPin D0
-#define trig D1
-#define echo D2
-
-#define pump D3
-#define valve D4
-
-// #define trig D5
-// #define echo D6
-
-#define ledRed D6
-#define ledGreen D7
-#define ledBlue D8
+const char *indexFile = "index.html";
 
 const char AUTO_MODE = 'A';
 const char CONTROL_MODE = 'C';
 const char SLEEP_MODE = 'S';
 
-int leds[] = {ledRed, ledGreen, ledBlue};
+const int LOW_LEVEL = 1;
+const int NEUTRAL_LEVEL = 2;
+const int HIGH_LEVEL = 3;
 
-char tankMode = AUTO_MODE;
+int rgbLeds[] = {ledRed, ledGreen, ledBlue};
 
-int distance;
-int duration;
+const int SENSOR_HEIGHT_OFFSET = 5; // MUST NOT BE ZERO or else water will reach device
+int tankHeight = 50;
+int lowLevelThreshold = 50;  // high value means how far water is from device
+int highLevelThreshold = 20; // lower value means how close water is from device
 
-char webpage[] PROGMEM = R"=====(
-<html>
-  <head>
-    <style>
-      .header {
-        text-align: center;
-      }
+String state;
 
-      .main {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: stretch;
-        width: 100%;
-        max-width: 500px;
-        gap: 3rem;
-        margin: 0 auto;
-      }
+char currentMode = CONTROL_MODE;
 
-      .form {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: stretch;
-        gap: 1rem;
-      }
+int sensorDistance; // current sensorDistance value read by ultrasonic sensor
+int flightDuration; // flightDuration variable used by ultrasonic sensor
 
-      .form-label {
-        display: block;
-        width: 100%;
-      }
+char activeLedColor; // current active LED color
+int currentLevel;    // current distance level
 
-      .form-input {
-        padding: 0.5rem 0.5rem;
-        width: 100%;
-      }
-
-      .btn {
-        padding: 0.5rem 3rem;
-      }
-
-      .w-full {
-        width: 100%;
-      }
-
-      #rxConsole {
-        height: 10em;
-        width: 100%;
-      }
-    </style>
-  </head>
-  <body onload="javascript:init()">
-    <header class="header">
-      <div>
-        <h1>Auto Tank Control Panel</h1>
-      </div>
-    </header>
-    <main class="main">
-      <div>
-        <label for="rxConsole">(Rx) Console [READONLY]</label>
-        <textarea id="rxConsole" readonly></textarea>
-      </div>
-      <div>
-        <label class="form-label" for="txInput">Transmit (Tx) Bar</label>
-        <input class="form-input" type="text" id="txInput" />
-      </div>
-      <div>
-        <select class="btn w-full" name="mode" id="mode">
-          <option value="A">Auto Mode</option>
-          <option value="C">Control Mode</option>
-          <option value="S">Sleep Mode</option>
-        </select>
-        <button class="btn w-full" id="pumpButton">Toggle Pump</button>
-        <button class="btn w-full" id="valveButton">Toggle Valve</button>
-      </div>
-      <form class="form" id="dataForm">
-        <div class="form-control">
-          <label class="form-label" for="led">Led</label>
-          <input class="form-input" name="led" id="led" />
-        </div>
-        <div>
-          <label class="form-label" for="command">Command</label>
-          <input class="form-input" name="command" id="command" />
-        </div>
-        <button class="btn" type="submit">Send</button>
-      </form>
-    </main>
-
-    <script>
-      const pumpButton = document.getElementById('pumpButton');
-      const valveButton = document.getElementById('valveButton');
-      const mode = document.getElementById('mode');
-      const txInput = document.getElementById('txInput');
-      const rxConsole = document.getElementById('rxConsole');
-      const dataForm = document.getElementById('dataForm');
-
-      var Socket;
-
-      const init = () => {
-        Socket = new WebSocket('ws://' + window.location.hostname + ':81/');
-        Socket.onmessage = transmitText;
-      };
-
-      const togglePump = () => {
-        Socket.send('3');
-      };
-
-      const toggleValve = () => {
-        Socket.send('4');
-      };
-
-      const transmitText = (event) => {
-        if (event.keyCode == 13) {
-          const data = txInput.value;
-          Socket.send(data);
-          txInput.value = '';
-        }
-      };
-
-      const onSocketMessage = (event) => {
-        rxConsole.value += event.data;
-      };
-
-      const onFormSubmit = (event) => {
-        event.preventDefault();
-
-        const formData = new FormData(event.target);
-        const jsonData = JSON.stringify(Object.fromEntries(formData));
-
-        Socket.send(jsonData);
-      };
-
-      const onModeSelect = (event) => {
-        Socket.send(mode.value);
-      };
-
-      pumpButton.addEventListener('click', togglePump);
-      valveButton.addEventListener('click', toggleValve);
-      txInput.addEventListener('keydown', transmitText);
-      dataForm.addEventListener('submit', onFormSubmit);
-      mode.addEventListener('change', onModeSelect);
-    </script>
-  </body>
-</html>
-)=====";
+// =================== COMPONENT FUNCTIONS =======================
 
 void showLed(int ledToOn)
 {
-  for (int i = 0; i < 3; i++)
+  for (uint8_t i = 0; i < 3; i++)
   {
-    if (leds[i] == ledToOn)
+    if (rgbLeds[i] == ledToOn)
     {
-      Serial.print("Showing LED...");
-      Serial.println(ledToOn);
-      digitalWrite(leds[i], HIGH);
+      digitalWrite(rgbLeds[i], HIGH);
     }
     else
     {
-      digitalWrite(leds[i], LOW);
+      digitalWrite(rgbLeds[i], LOW);
     }
   }
 }
@@ -216,71 +77,6 @@ void toggleValve()
   digitalWrite(valve, !digitalRead(valve));
 }
 
-void parseJsonData(uint8_t *payload)
-{
-
-  DynamicJsonDocument doc(200);
-  DeserializationError error = deserializeJson(doc, payload);
-
-  if (error)
-  {
-    Serial.print(F("deserializeJson() failed: "));
-    Serial.println(error.f_str());
-    return;
-  }
-
-  String led = doc["led"];
-  String command = doc["command"];
-
-  Serial.println(led);
-  Serial.println(command);
-
-  server.send(204, "");
-}
-
-void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
-{
-  if (type != WStype_TEXT)
-  {
-    return;
-  }
-
-  char actionCode = payload[0];
-
-  Serial.print("Action Code: ");
-  Serial.println(actionCode);
-
-  if (actionCode == AUTO_MODE || actionCode == CONTROL_MODE || actionCode == SLEEP_MODE)
-  {
-    tankMode = actionCode;
-    return;
-  }
-
-  if (tankMode == CONTROL_MODE)
-  {
-    if (actionCode == '3')
-    {
-      togglePump();
-      return;
-    }
-
-    if (actionCode == '4')
-    {
-      toggleValve();
-      return;
-    }
-  }
-
-  Serial.print("Data: ");
-  for (int i = 0; i < (int)length; i++)
-  {
-    Serial.print((char)payload[i]);
-  }
-  Serial.println();
-
-  parseJsonData(payload);
-}
-
 void setPump(int status)
 {
   digitalWrite(pump, status);
@@ -291,27 +87,58 @@ void setValve(int status)
   digitalWrite(valve, status);
 }
 
-void handleAutoMode()
+void handleLevel()
 {
-  if (distance < 100)
+
+  if (sensorDistance <= lowLevelThreshold && sensorDistance >= highLevelThreshold)
   {
-    showLed(ledRed);
-    setPump(HIGH);
-    setValve(LOW);
+    currentLevel = NEUTRAL_LEVEL;
   }
-  else if (distance >= 100 && distance <= 200)
+  else if (sensorDistance < lowLevelThreshold)
+  {
+    currentLevel = HIGH_LEVEL;
+  }
+
+  else
+  {
+    currentLevel = LOW_LEVEL;
+  }
+}
+
+void handleLed()
+{
+  if (currentLevel == HIGH_LEVEL)
+  {
+    showLed(ledBlue);
+    activeLedColor = 'B';
+  }
+  else if (currentLevel == NEUTRAL_LEVEL)
   {
     showLed(ledGreen);
+    activeLedColor = 'G';
   }
   else
   {
+    showLed(ledRed);
+    activeLedColor = 'R';
+  }
+}
+
+void handleAutoMode()
+{
+  if (currentLevel == LOW_LEVEL)
+  {
+    setPump(HIGH);
+    setValve(LOW);
+  }
+  else if (currentLevel == HIGH_LEVEL)
+  {
     setPump(LOW);
-    showLed(ledBlue);
     setValve(HIGH);
   }
 }
 
-void ultrasonic()
+void handleSensor()
 {
   digitalWrite(trig, LOW);
   delayMicroseconds(2);
@@ -319,38 +146,163 @@ void ultrasonic()
   delayMicroseconds(10);
   digitalWrite(trig, LOW);
 
-  duration = pulseIn(echo, HIGH);
-  distance = duration * 0.034 / 2;
-
-  Serial.print("Distance: ");
-  Serial.println(distance);
-
-  Serial.print("Mode: ");
-  Serial.println(tankMode);
-
-  if (tankMode == AUTO_MODE)
-  {
-    handleAutoMode();
-  }
+  flightDuration = pulseIn(echo, HIGH);
+  sensorDistance = flightDuration * 0.034 / 2;
 
   delay(500);
 }
 
+void handleModes()
+{
+  if (currentMode == AUTO_MODE)
+  {
+    handleAutoMode();
+  }
+}
+
+// =================== SERVER AND WEB SOCKET =======================
+
+void webSocketBroadcast(String str)
+{
+  char *tab2 = new char[str.length() + 1];
+  strcpy(tab2, str.c_str());
+  webSocket.broadcastTXT(tab2, str.length());
+}
+
+void broadcastSystemState()
+{
+  StaticJsonDocument<200> doc;
+
+  state = ""; // reset state string info
+
+  doc["sensorDistance"] = sensorDistance;
+  doc["activeLedColor"] = (char)activeLedColor;
+  doc["pumpState"] = digitalRead(pump);
+  doc["valveState"] = digitalRead(valve);
+  doc["currentMode"] = (char)currentMode;
+  doc["currentLevel"] = currentLevel;
+  doc["tankHeight"] = tankHeight;
+  doc["lowLevelThreshold"] = lowLevelThreshold;
+  doc["highLevelThreshold"] = highLevelThreshold;
+
+  // uncomment to monitor system state
+  // serializeJson(doc, USE_SERIAL);
+  // serializeJsonPretty(doc, USE_SERIAL);
+
+  serializeJsonPretty(doc, state);
+}
+
+void parseJsonData(uint8_t *payload)
+{
+  DynamicJsonDocument doc(200);
+  DeserializationError error = deserializeJson(doc, payload);
+
+  if (error)
+  {
+    USE_SERIAL.print(F("deserializeJson() failed: "));
+    USE_SERIAL.println(error.f_str());
+    return;
+  }
+
+  int userTankHeight = (int)doc["tankHeight"];
+  int highLevelValue = (int)doc["highLevelValue"];
+  int lowLevelValue = (int)doc["lowLevelValue"];
+
+  if (userTankHeight <= highLevelValue || userTankHeight <= (highLevelValue + SENSOR_HEIGHT_OFFSET))
+  {
+    USE_SERIAL.println("Invalid highLevelValue");
+    server.send(500, "");
+    return;
+  }
+
+  if (lowLevelValue >= highLevelValue || highLevelValue <= lowLevelValue)
+  {
+    USE_SERIAL.println("Invalid user values");
+    server.send(500, "");
+    return;
+  }
+
+  tankHeight = userTankHeight;
+  lowLevelThreshold = userTankHeight - lowLevelValue;
+  highLevelThreshold = userTankHeight - highLevelValue;
+  server.send(204, "");
+}
+
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
+{
+  switch (type)
+  {
+  case WStype_CONNECTED:
+    USE_SERIAL.println("WebSocket Connected");
+    webSocket.sendTXT(num, "Connected");
+    break;
+  case WStype_DISCONNECTED:
+    USE_SERIAL.println("WebSocket Disconnected");
+    break;
+  case WStype_ERROR:
+    USE_SERIAL.println("WebSocket Disconnected");
+    break;
+  case WStype_PING:
+    USE_SERIAL.printf("WebSocket Ping\n");
+    break;
+  case WStype_PONG:
+    USE_SERIAL.printf("WebSocket Pong\n");
+    broadcastSystemState();
+    break;
+  case WStype_TEXT:
+    USE_SERIAL.printf("WebSocket Message: %s\n", payload);
+    char actionCode = payload[0];
+
+    USE_SERIAL.print("Action Code: ");
+    USE_SERIAL.println(actionCode);
+
+    if (actionCode == AUTO_MODE || actionCode == CONTROL_MODE || actionCode == SLEEP_MODE)
+    {
+      currentMode = actionCode;
+    }
+
+    if (currentMode == CONTROL_MODE)
+    {
+      if (actionCode == '3')
+      {
+        togglePump();
+      }
+      else if (actionCode == '4')
+      {
+        toggleValve();
+      }
+    }
+
+    parseJsonData(payload);
+    break;
+  }
+}
+
+// =================== SETUP & LOOP =======================
+
 void setup()
 {
   WiFi.begin(ssid, password);
-  Serial.begin(115200);
+  USE_SERIAL.begin(115200);
+
+  for (uint8_t t = 4; t > 0; t--)
+  {
+    USE_SERIAL.printf("[SETUP] BOOTING %d...\n", t);
+    USE_SERIAL.flush();
+    delay(1000);
+  }
+
+  USE_SERIAL.println("AUTOTANK v0.1");
 
   while (WiFi.status() != WL_CONNECTED)
   {
-    Serial.print(".");
+    USE_SERIAL.print(".");
     delay(500);
   }
 
-  Serial.println("");
-  Serial.println("Connected!");
-  Serial.print("IP Address: ");
-  Serial.println(WiFi.localIP());
+  USE_SERIAL.printf("\nConnected successfully to %s\n", DEVICE_WIFI_SSID);
+  USE_SERIAL.print("IP Address: ");
+  USE_SERIAL.println(WiFi.localIP());
 
   pinMode(trig, OUTPUT);
   pinMode(echo, INPUT);
@@ -360,9 +312,28 @@ void setup()
   pinMode(ledGreen, OUTPUT);
   pinMode(ledBlue, OUTPUT);
 
-  server.on("/", []()
-            { server.send_P(200, "text/html", webpage); });
+  server.serveStatic("/", LittleFS, "/");
+
+  // specific file streaming
+  server.on("/stream-index", HTTPMethod::HTTP_GET, []()
+            {
+    LittleFS.begin();
+
+    File file = LittleFS.open("index.html", "r");
+
+    if (!file) {
+      USE_SERIAL.println("Could not open file for reading...");
+      server.send(500, "application/json",
+                  "{\"error\":\"could not open file\"}");
+    } else {
+      server.streamFile<File>(file, "text/html");
+      file.close();
+    }
+
+    LittleFS.end(); });
+
   server.begin();
+  LittleFS.begin();
 
   webSocket.begin();
   webSocket.onEvent(webSocketEvent);
@@ -370,14 +341,21 @@ void setup()
 
 void loop()
 {
-  ultrasonic();
+  handleSensor();
+  handleLevel();
+  handleLed();
+  handleModes();
 
   webSocket.loop();
   server.handleClient();
 
-  if (Serial.available() > 0)
+  if (USE_SERIAL.available() > 0)
   {
-    char c[] = {(char)Serial.read()};
+    char c[] = {(char)USE_SERIAL.read()};
     webSocket.broadcastTXT(c, sizeof(c));
   }
+
+  broadcastSystemState();
+  webSocket.broadcastTXT(state);
+  delay(50);
 }

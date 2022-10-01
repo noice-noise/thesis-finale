@@ -1,0 +1,183 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body onload="javascript:init()">
+    <main class="main">
+      <div class="control-section">
+        <div>
+          <label for="rxConsole">(Rx) Console</label>
+          <textarea id="rxConsole" readonly>
+Searching for AutoTank devices...</textarea
+          >
+        </div>
+        <div>
+          <p>Mode</p>
+          <select class="btn w-full" name="mode" id="mode">
+            <option value="C">Control Mode</option>
+            <option value="A">Auto Mode</option>
+            <option value="S">Sleep Mode</option>
+          </select>
+          <p>
+            Auto - triggers pump & valve depending on low & high threshold
+            values
+          </p>
+          <p>
+            Control - allows users to override system & manually control pump &
+            value
+          </p>
+          <p>Sleep - no implementation for now, but reserved for OFF state</p>
+        </div>
+
+        <div>
+          <button class="btn w-full" id="pumpButton">Toggle Pump</button>
+          <button class="btn w-full" id="valveButton">Toggle Valve</button>
+        </div>
+      </div>
+
+      <div class="config-section">
+        <!-- <div class="form">
+          <div>
+            <h3>System State</h3>
+            <p>State of device summary (cannot be edited, readonly)</p>
+          </div>
+          <div class="form-control">
+            <label class="form-label" for="sensorDistance"
+              >sensorDistance</label
+            >
+            <input
+              class="form-input"
+              readonly
+              name="sensorDistance"
+              id="sensorDistance"
+            />
+          </div>
+          <div class="form-control">
+            <label class="form-label" for="activeLedColor"
+              >activeLedColor</label
+            >
+            <input
+              class="form-input"
+              readonly
+              name="activeLedColor"
+              id="activeLedColor"
+            />
+          </div>
+          <div class="form-control">
+            <label class="form-label" for="pumpState">pumpState</label>
+            <input
+              class="form-input"
+              readonly
+              name="pumpState"
+              id="pumpState"
+            />
+          </div>
+          <div class="form-control">
+            <label class="form-label" for="valveState">valveState</label>
+            <input
+              class="form-input"
+              readonly
+              name="valveState"
+              id="valveState"
+            />
+          </div>
+          <div class="form-control">
+            <label class="form-label" for="currentMode">currentMode</label>
+            <input
+              class="form-input"
+              readonly
+              name="currentMode"
+              id="currentMode"
+            />
+          </div>
+          <div class="form-control">
+            <label class="form-label" for="lowLevelThreshold"
+              >lowLevelThreshold</label
+            >
+            <input
+              class="form-input"
+              readonly
+              name="lowLevelThreshold"
+              id="lowLevelThreshold"
+            />
+          </div>
+          <div class="form-control">
+            <label class="form-label" for="highLevelThreshold"
+              >highLevelThreshold</label
+            >
+            <input
+              class="form-input"
+              readonly
+              name="highLevelThreshold"
+              id="highLevelThreshold"
+            />
+          </div>
+        </div> -->
+        <form class="form" id="dataForm">
+          <div>
+            <h3>System Configuration</h3>
+            <p>Edit Automation Config by changing the values below.</p>
+            <p>All Values must not be the same</p>
+            <p>
+              Tank Height must be 5 cm greater than High Value (to not reach
+              sensor)
+            </p>
+          </div>
+          <div class="form-control">
+            <label class="form-label" for="tankHeight">Tank Height (cm)</label>
+            <input
+              class="form-input"
+              type="number"
+              min="1"
+              max="200"
+              name="tankHeight"
+              id="tankHeight"
+              value="60"
+              required
+            />
+          </div>
+          <div class="form-control">
+            <label class="form-label" for="highLevelValue"
+              >High Water Level (cm)</label
+            >
+            <input
+              class="form-input"
+              type="number"
+              name="highLevelValue"
+              max="190"
+              id="highLevelValue"
+              value="50"
+              required
+            />
+          </div>
+          <div class="form-control">
+            <label class="form-label" for="lowLevelValue"
+              >Low Water Level (cm)</label
+            >
+            <input
+              class="form-input"
+              type="number"
+              name="lowLevelValue"
+              id="lowLevelValue"
+              value="20"
+              required
+            />
+          </div>
+
+          <button class="btn" type="submit">Update Config</button>
+        </form>
+
+        <div>
+          <label class="form-label" for="txInput">Transmit (Tx) Bar</label>
+          <input
+            class="form-input"
+            type="text"
+            id="txInput"
+            placeholder="Send message to device Serial Monitor"
+          />
+        </div>
+      </div>
+    </main>
+    <script src="./main.js"></script>
+  </body>
+</html>

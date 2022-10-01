@@ -1,0 +1,30 @@
+{
+  "folders": [
+    {
+      "path": "..\\.."
+    },
+    {
+      "name": "autotank",
+      "path": ".."
+    }
+  ],
+  "settings": {
+    "liveServer.settings.multiRootWorkspaceName": "thesis-finale",
+    "files.associations": {
+      "*.ejs": "html",
+      "algorithm": "cpp",
+      "list": "cpp",
+      "vector": "cpp",
+      "xhash": "cpp",
+      "xstring": "cpp",
+      "xtree": "cpp",
+      "xutility": "cpp",
+      "*.tcc": "cpp",
+      "iterator": "cpp",
+      "memory": "cpp",
+      "random": "cpp",
+      "functional": "cpp",
+      "ranges": "cpp"
+    }
+  }
+}

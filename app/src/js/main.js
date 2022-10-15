@@ -14,15 +14,15 @@ const lowLevelThreshold = document.getElementById('lowLevelThreshold');
 const highLevelThreshold = document.getElementById('highLevelThreshold');
 
 let systemStateJSON = `{
-  "sensorDistance": 88,
-  "activeLedColor": 66,
+  "sensorDistance": 0,
+  "activeLedColor": 0,
   "pumpState": 0,
   "valveState": 0,
-  "currentMode": 67,
-  "currentLevel": 3,
-  "tankHeight": 30,
-  "lowLevelThreshold": 10,
-  "highLevelThreshold": 5
+  "currentMode": 0,
+  "currentLevel": 0,
+  "tankHeight": 0,
+  "lowLevelThreshold": 0,
+  "highLevelThreshold": 0
 }`;
 
 let systemState = JSON.parse(systemStateJSON);
@@ -33,16 +33,19 @@ console.log({ systemState });
 var Socket;
 
 const updateStateData = () => {
-  sensorDistance.textContent = systemState.sensorDistance;
-  activeLedColor.textContent = systemState.activeLedColor;
-  currentMode.textContent = systemState.currentMode;
-  currentLevel.textContent = systemState.currentLevel;
-  tankHeight.textContent = systemState.tankHeight;
-  lowLevelThreshold.textContent = systemState.lowLevelThreshold;
-  highLevelThreshold.textContent = systemState.highLevelThreshold;
+  try {
+    systemState = JSON.parse(systemStateJSON);
+    sensorDistance.textContent = systemState.sensorDistance;
+    activeLedColor.textContent = systemState.activeLedColor;
+    currentMode.textContent = systemState.currentMode;
+    currentLevel.textContent = systemState.currentLevel;
+    tankHeight.textContent = systemState.tankHeight;
+    lowLevelThreshold.textContent = systemState.lowLevelThreshold;
+    highLevelThreshold.textContent = systemState.highLevelThreshold;
+  } catch {
+    console.log('Error updating state data');
+  }
 };
-
-updateStateData();
 
 const init = () => {
   Socket = new WebSocket('ws://' + window.location.hostname + ':81/');
@@ -60,6 +63,7 @@ const init = () => {
     console.log('WebSocket message:');
     console.log(event.data);
     rxConsole.value = event.data;
+    updateStateData();
   };
 
   Socket.onopen = function (event) {
@@ -103,7 +107,8 @@ const onModeSelect = (event) => {
 };
 
 pumpButton.addEventListener('click', togglePump);
-valveButton.addEventListener('click', toggleValve);
 txInput.addEventListener('keydown', transmitText);
 dataForm.addEventListener('submit', onFormSubmit);
 mode.addEventListener('change', onModeSelect);
+
+updateStateData();

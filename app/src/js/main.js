@@ -35,7 +35,12 @@ var Socket;
 const updateStateData = () => {
   try {
     systemState = JSON.parse(systemStateJSON);
-    sensorDistance.textContent = systemState.sensorDistance;
+
+    if (systemState.sensorDistance < systemState.tankHeight) {
+      sensorDistance.textContent =
+        systemState.tankHeight - systemState.sensorDistance;
+    }
+
     activeLedColor.textContent = systemState.activeLedColor;
     currentMode.textContent = systemState.currentMode;
     currentLevel.textContent = systemState.currentLevel;

@@ -1,0 +1,10 @@
+{
+  "devDependencies": {
+    "tailwindcss": "^3.1.8"
+  },
+  "scripts": {
+    "watch": "npx tailwindcss -i ./src/css/input.css -o ./src/css/style.css -w",
+    "minify": "npx tailwindcss -i ./src/css/input.css -o ./src/css/style.css -m",
+    "dev": "concurrently --kill-others \"npm run watch\""
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "folders": [
+	{
+		"path": "autotank"
+	},
+	{
+		"path": "app"
+	}
+],
+  "settings": {
+    "liveServer.settings.port": 5501,
+    "liveServer.settings.multiRootWorkspaceName": "app"
+  }
+}

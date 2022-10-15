@@ -33,12 +33,15 @@ const int LOW_LEVEL = 1;
 const int NEUTRAL_LEVEL = 2;
 const int HIGH_LEVEL = 3;
 
+// TODO CONTENT LENGTH HTML ERROR ON LOAD
+// TODO REMOVE SLEEP MODE ON OPTIONS
+
 int rgbLeds[] = {ledRed, ledGreen, ledBlue};
 
-const int SENSOR_HEIGHT_OFFSET = 5; // MUST NOT BE ZERO or else water will reach device
-int tankHeight = 50;
-int lowLevelThreshold = 50;  // high value means how far water is from device
-int highLevelThreshold = 20; // lower value means how close water is from device
+const int SENSOR_HEIGHT_OFFSET = 2; // MUST NOT BE ZERO or else water will reach device
+int tankHeight = 30;
+int lowLevelThreshold = 10; // high value means how far water is from device
+int highLevelThreshold = 5; // lower value means how close water is from device
 
 String state;
 
@@ -258,6 +261,12 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
 
     if (actionCode == AUTO_MODE || actionCode == CONTROL_MODE || actionCode == SLEEP_MODE)
     {
+      if (currentMode == AUTO_MODE && actionCode == CONTROL_MODE)
+      {
+        // reset all control when switching to control mode
+        setPump(LOW);
+        setValve(LOW);
+      }
       currentMode = actionCode;
     }
 
@@ -292,7 +301,7 @@ void setup()
     delay(1000);
   }
 
-  USE_SERIAL.println("AUTOTANK v0.1");
+  USE_SERIAL.println("AUTOTANK MASTER");
 
   while (WiFi.status() != WL_CONNECTED)
   {

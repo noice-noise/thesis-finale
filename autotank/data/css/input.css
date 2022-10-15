@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+}
+
+@layer components {
+  .label {
+    @apply mb-2;
+  }
+
+  .input {
+    @apply w-full px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-200 hover:border-blue-700 transition-all focus:ring-2 ring-offset-2 ring-blue-700 focus:outline-0  text-slate-200 hover:text-slate-800 border border-transparent ring-offset-transparent;
+  }
+
+  .control-btn--primary {
+    @apply w-full bg-blue-700 rounded-xl  text-white px-5 py-3 shadow-sm transition-all font-bold tracking-wide hover:bg-blue-500 focus:bg-blue-800 active:bg-blue-800 focus:ring-4 focus:ring-offset-slate-900 focus:ring-blue-500;
+  }
+
+  .control-btn--secondary {
+    @apply w-full border-blue-700 text-blue-700 rounded-xl border border-opacity-80 px-5 py-3 shadow-sm transition-all hover:bg-blue-100 font-bold;
+  }
+
+  .section-title {
+    @apply text-lg;
+  }
+}

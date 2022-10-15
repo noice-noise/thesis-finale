@@ -1,23 +1,79 @@
-<html>
+<!DOCTYPE html>
+<html lang="en" class="dark">
   <head>
-    <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AutoTank</title>
+    <link rel="stylesheet" href="./css/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500&family=Fira+Code&family=Inter:wght@400;500;700&family=Poppins&display=swap"
+      rel="stylesheet"
+    />
   </head>
-  <body onload="javascript:init()">
-    <main class="main">
-      <div class="control-section">
-        <div>
-          <label for="rxConsole">(Rx) Console</label>
-          <textarea id="rxConsole" readonly>
-Searching for AutoTank devices...</textarea
-          >
+  <body
+    onload="javascript:init()"
+    class="antialiased transition-all text-slate-50 lg:h-screen w-full bg-slate-900 text-sm lg:px-10"
+  >
+    <header class="w-full py-6 flex justify-between items-center">
+      <a class="p-2" aria-labelby="Control button" href="#">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="w-6 h-6"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M3.75 6.75h16.5M3.75 12H12m-8.25 5.25h16.5"
+          />
+        </svg>
+      </a>
+      <span class="text-2xl font-bold">AutoTank Master</span>
+      <a class="p-2" aria-labelby="Control button" href="#">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="w-6 h-6"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"
+          />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+          />
+        </svg>
+      </a>
+    </header>
+    <main
+      class="w-full flex flex-col gap-10 px-6 py-5 lg:flex-row lg:justify-between lg:px-0"
+    >
+      <div class="flex flex-col gap-6 w-full lg:max-w-[12rem]">
+        <div
+          class="text-xs opacity-70 flex flex-col gap-2 w-full lg:max-w-xs mt-2 text-justify"
+        >
+          <h3 class="section-title">About</h3>
+          <p>Built and developed by</p>
+          <p class="ml-2">Raul Comeros, Jr</p>
+          <p class="ml-2">Mateo Raffy Del Corro</p>
         </div>
-        <div>
-          <p>Mode</p>
-          <select class="btn w-full" name="mode" id="mode">
-            <option value="C">Control Mode</option>
-            <option value="A">Auto Mode</option>
-            <option value="S">Sleep Mode</option>
-          </select>
+
+        <div
+          class="text-xs opacity-70 flex flex-col gap-2 w-full lg:max-w-xs mt-2 text-justify"
+        >
+          <h3 class="section-title opacity-100">Help</h3>
           <p>
             Auto - triggers pump & valve depending on low & high threshold
             values
@@ -26,107 +82,118 @@ Searching for AutoTank devices...</textarea
             Control - allows users to override system & manually control pump &
             value
           </p>
-          <p>Sleep - no implementation for now, but reserved for OFF state</p>
         </div>
-
-        <div>
-          <button class="btn w-full" id="pumpButton">Toggle Pump</button>
-          <button class="btn w-full" id="valveButton">Toggle Valve</button>
+        <div class="w-full flex flex-col placeholder:opacity-50">
+          <p class="label" for="rxConsole">(Rx) Console</p>
+          <textarea
+            id="rxConsole"
+            class="w-full px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-200 hover:border-blue-700 transition-all focus:ring-2 ring-offset-2 ring-blue-700 focus:outline-0 text-slate-200 hover:text-slate-800 border border-transparent ring-offset-transparent h-32"
+            readonly
+            placeholder="Connecting..."
+          ></textarea>
+          <span
+            class="text-xs opacity-70 flex flex-col gap-2 w-full lg:max-w-xs mt-2 text-justify"
+            >System state advance monitoring</span
+          >
         </div>
       </div>
 
-      <div class="config-section">
-        <!-- <div class="form">
+      <div class="w-full flex flex-col gap-10 relative">
+        <div
+          class="text-center font-medium shadow-xl shadow-blue-700 rounded-full py-10 h-52 w-52 mx-auto"
+        >
+          <div class="flex flex-col w-full gap-3">
+            <p>Water Capacity</p>
+            <span id="sensorDistance" class="text-8xl text-center w-full"
+              >7</span
+            >
+          </div>
+        </div>
+        <div>
+          <div class="absolute top-0 left-0 text-xs flex flex-col gap-10 mt-4">
+            <div class="flex flex-col">
+              <span>Level</span>
+              <span id="currentLevel" class="text-base">999</span>
+            </div>
+            <div class="flex flex-col">
+              <span>Mode</span>
+              <span id="currentMode" class="text-base">999</span>
+            </div>
+            <div class="flex flex-col">
+              <span>LED</span>
+              <span id="activeLedColor" class="text-base">999</span>
+            </div>
+          </div>
+          <div
+            class="absolute top-0 right-0 text-xs flex flex-col text-right gap-10 h-full mt-4"
+          >
+            <div class="flex flex-col">
+              <span>Height</span>
+              <span>
+                <span id="tankHeight" class="text-base font-cod mr-1">999</span
+                ><span>cm</span>
+              </span>
+            </div>
+            <div class="flex flex-col">
+              <span>Low</span>
+              <span>
+                <span id="lowLevelThreshold" class="text-base mr-1">999</span
+                ><span>cm</span>
+              </span>
+            </div>
+            <div class="flex flex-col">
+              <span>High</span>
+              <span>
+                <span id="highLevelThreshold" class="text-base mr-1">999</span
+                ><span>cm</span>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="flex flex-col lg:flex-row w-full gap-10 justify-between">
+          <div class="w-full lg:w-1/2">
+            <p class="label">Mode</p>
+            <select class="input px-5 py-3" name="mode" id="mode">
+              <option value="C">Control Mode</option>
+              <option value="A">Auto Mode</option>
+            </select>
+          </div>
+          <div class="w-full lg:w-1/2">
+            <p class="label">Pump</p>
+            <button class="control-btn--primary" id="pumpButton">
+              Toggle Pump
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-col w-full">
+          <label class="label" for="txInput">Transmit (Tx) Bar</label>
+          <input
+            class="input"
+            type="text"
+            id="txInput"
+            placeholder="Send message to device Serial Monitor"
+          />
+        </div>
+      </div>
+
+      <div class="w-full flex flex-col gap-10 lg:max-w-[12rem]">
+        <form class="flex flex-col gap-6" id="dataForm">
           <div>
-            <h3>System State</h3>
-            <p>State of device summary (cannot be edited, readonly)</p>
+            <h3 class="section-title">System Configuration</h3>
+            <div class="hidden">
+              <p>Edit Automation Config by changing the values below.</p>
+              <p>All Values must not be the same</p>
+              <p>
+                Tank Height must be 5 cm greater than High Value (to not reach
+                sensor)
+              </p>
+            </div>
           </div>
-          <div class="form-control">
-            <label class="form-label" for="sensorDistance"
-              >sensorDistance</label
-            >
+          <div class="flex flex-col">
+            <label class="label" for="tankHeight">Tank Height (cm)</label>
             <input
-              class="form-input"
-              readonly
-              name="sensorDistance"
-              id="sensorDistance"
-            />
-          </div>
-          <div class="form-control">
-            <label class="form-label" for="activeLedColor"
-              >activeLedColor</label
-            >
-            <input
-              class="form-input"
-              readonly
-              name="activeLedColor"
-              id="activeLedColor"
-            />
-          </div>
-          <div class="form-control">
-            <label class="form-label" for="pumpState">pumpState</label>
-            <input
-              class="form-input"
-              readonly
-              name="pumpState"
-              id="pumpState"
-            />
-          </div>
-          <div class="form-control">
-            <label class="form-label" for="valveState">valveState</label>
-            <input
-              class="form-input"
-              readonly
-              name="valveState"
-              id="valveState"
-            />
-          </div>
-          <div class="form-control">
-            <label class="form-label" for="currentMode">currentMode</label>
-            <input
-              class="form-input"
-              readonly
-              name="currentMode"
-              id="currentMode"
-            />
-          </div>
-          <div class="form-control">
-            <label class="form-label" for="lowLevelThreshold"
-              >lowLevelThreshold</label
-            >
-            <input
-              class="form-input"
-              readonly
-              name="lowLevelThreshold"
-              id="lowLevelThreshold"
-            />
-          </div>
-          <div class="form-control">
-            <label class="form-label" for="highLevelThreshold"
-              >highLevelThreshold</label
-            >
-            <input
-              class="form-input"
-              readonly
-              name="highLevelThreshold"
-              id="highLevelThreshold"
-            />
-          </div>
-        </div> -->
-        <form class="form" id="dataForm">
-          <div>
-            <h3>System Configuration</h3>
-            <p>Edit Automation Config by changing the values below.</p>
-            <p>All Values must not be the same</p>
-            <p>
-              Tank Height must be 5 cm greater than High Value (to not reach
-              sensor)
-            </p>
-          </div>
-          <div class="form-control">
-            <label class="form-label" for="tankHeight">Tank Height (cm)</label>
-            <input
-              class="form-input"
+              class="input"
               type="number"
               min="1"
               max="200"
@@ -136,12 +203,12 @@ Searching for AutoTank devices...</textarea
               required
             />
           </div>
-          <div class="form-control">
-            <label class="form-label" for="highLevelValue"
+          <div class="flex flex-col">
+            <label class="label" for="highLevelValue"
               >High Water Level (cm)</label
             >
             <input
-              class="form-input"
+              class="input"
               type="number"
               name="highLevelValue"
               max="190"
@@ -150,12 +217,12 @@ Searching for AutoTank devices...</textarea
               required
             />
           </div>
-          <div class="form-control">
-            <label class="form-label" for="lowLevelValue"
+          <div class="flex flex-col">
+            <label class="label" for="lowLevelValue"
               >Low Water Level (cm)</label
             >
             <input
-              class="form-input"
+              class="input"
               type="number"
               name="lowLevelValue"
               id="lowLevelValue"
@@ -164,20 +231,13 @@ Searching for AutoTank devices...</textarea
             />
           </div>
 
-          <button class="btn" type="submit">Update Config</button>
+          <button class="control-btn--secondary" type="submit">
+            Update Config
+          </button>
         </form>
-
-        <div>
-          <label class="form-label" for="txInput">Transmit (Tx) Bar</label>
-          <input
-            class="form-input"
-            type="text"
-            id="txInput"
-            placeholder="Send message to device Serial Monitor"
-          />
-        </div>
       </div>
     </main>
-    <script src="./main.js"></script>
+
+    <script src="./js/main.js"></script>
   </body>
 </html>

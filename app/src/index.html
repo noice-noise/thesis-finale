@@ -181,14 +181,6 @@
         <form class="flex flex-col gap-6" id="dataForm">
           <div>
             <h3 class="section-title">System Configuration</h3>
-            <div class="hidden">
-              <p>Edit Automation Config by changing the values below.</p>
-              <p>All Values must not be the same</p>
-              <p>
-                Tank Height must be 5 cm greater than High Value (to not reach
-                sensor)
-              </p>
-            </div>
           </div>
           <div class="flex flex-col">
             <label class="label" for="tankHeight">Tank Height (cm)</label>
@@ -199,7 +191,7 @@
               max="200"
               name="tankHeight"
               id="tankHeight"
-              value="60"
+              value="30"
               required
             />
           </div>
@@ -213,7 +205,7 @@
               name="highLevelValue"
               max="190"
               id="highLevelValue"
-              value="50"
+              value="25"
               required
             />
           </div>
@@ -226,7 +218,7 @@
               type="number"
               name="lowLevelValue"
               id="lowLevelValue"
-              value="20"
+              value="10"
               required
             />
           </div>

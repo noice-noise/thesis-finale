@@ -26,16 +26,11 @@ let systemStateJSON = `{
 }`;
 
 let systemState = JSON.parse(systemStateJSON);
-console.log(systemState);
-console.log(systemState.currentMode);
-console.log({ systemState });
 
 var Socket;
 
 const updateStateData = () => {
   try {
-    systemState = JSON.parse(systemStateJSON);
-
     if (systemState.sensorDistance < systemState.tankHeight) {
       sensorDistance.textContent =
         systemState.tankHeight - systemState.sensorDistance;
@@ -68,7 +63,7 @@ const init = () => {
     console.log('WebSocket message:');
     console.log(event.data);
     rxConsole.value = event.data;
-    updateStateData();
+    systemState = JSON.parse(event.data);
   };
 
   Socket.onopen = function (event) {
@@ -91,11 +86,6 @@ const transmitText = (event) => {
     Socket.send(data);
     txInput.value = '';
   }
-};
-
-const onSocketMessage = (event) => {
-  console.log(event.data);
-  rxConsole.value += event.data;
 };
 
 const onFormSubmit = (event) => {

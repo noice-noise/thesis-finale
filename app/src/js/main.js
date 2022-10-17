@@ -34,8 +34,6 @@ var Socket;
 
 const updateStateData = () => {
   try {
-    systemState = JSON.parse(systemStateJSON);
-
     if (systemState.sensorDistance < systemState.tankHeight) {
       sensorDistance.textContent =
         systemState.tankHeight - systemState.sensorDistance;
@@ -96,6 +94,8 @@ const transmitText = (event) => {
 const onSocketMessage = (event) => {
   console.log(event.data);
   rxConsole.value += event.data;
+  systemState = JSON.parse(event.data);
+  updateStateData();
 };
 
 const onFormSubmit = (event) => {
